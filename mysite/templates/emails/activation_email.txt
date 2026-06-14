@@ -1,7 +1,0 @@
-Hi {{ user.first_name|default:user.email }},
-
-Thanks for creating an account. Please activate your account by clicking the link below:
-
-{{ activation_link }}
-
-If you did not sign up, ignore this email.
