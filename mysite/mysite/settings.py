@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from urllib.parse import quote
 
+from django.core.exceptions import ImproperlyConfigured
 import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -146,9 +147,27 @@ def _postgres_database_url_from_env() -> str:
     return url
 
 
+def _validate_database_configuration(database_url: str) -> str:
+    if not database_url:
+        raise ImproperlyConfigured(
+            "Database configuration is missing. Set DATABASE_URL, "
+            "or provide all POSTGRES_* variables."
+        )
+
+    lower_url = database_url.lower()
+    if lower_url.startswith(("postgres://", "postgresql://")) and not DEBUG:
+        if "sslmode=" not in lower_url:
+            raise ImproperlyConfigured(
+                "PostgreSQL production database URL must include sslmode=require."
+            )
+
+    return database_url
+
+
 database_url = os.getenv("DATABASE_URL", "").strip()
 if not database_url:
     database_url = _postgres_database_url_from_env()
+database_url = _validate_database_configuration(database_url)
 database_uses_postgres = bool(
     database_url and database_url.startswith(("postgres://", "postgresql://"))
 )
